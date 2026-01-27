@@ -1,4 +1,6 @@
 flask
 flask-cors
 reportlab
+qrcode
 pypiwin32; platform_system == 'Windows'
+

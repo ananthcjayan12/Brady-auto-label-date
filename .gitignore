@@ -1,0 +1,33 @@
+# Common
+.DS_Store
+*.log
+.vscode/
+.idea/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env*
+
+# Backend (Python)
+backend/__pycache__/
+backend/*.py[cod]
+backend/venv/
+backend/env/
+print-server/__pycache__/
+print-server/*.py[cod]
+print-server/env/
+print-server/venv/
+
+# App Specific (Backend)
+print-server/labels.db
+print-server/temp_labels/*
+!print-server/temp_labels/.gitkeep
+print-server/temp_test_labels/*
+!print-server/temp_test_labels/.gitkeep
+print-server/dist/
+print-server/build/
+print-server/*.spec
+
+# Memory files (incorrectly created)
+print-server/:memory:

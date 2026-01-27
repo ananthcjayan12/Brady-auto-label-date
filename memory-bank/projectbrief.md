@@ -1,18 +1,25 @@
-# Nokia Label Compliance Bridge (v2.1)
+# Brady Auto Label Date System
 
 ## Project Overview
-The Nokia Label Compliance Bridge is a "Scan-to-Print" workstation solution designed to automate the replication of Nokia product labels. The system bridges the gap between raw product scans and ISO-15434 compliant labels required for Nokia products.
+The Brady Auto Label Date system is a specialized label generation and printing workstation. It automates the process of creating sequential labels with QR codes and date-based identifiers (Year/Month) for Brady-branded labeling solutions. The system ensures data integrity by preventing duplicate serial number usage through a backend tracking database.
 
 ## Core Requirements
-- **Automated Scanning:** Capture raw DataMatrix scans from Nokia products.
-- **Data Parsing:** Extract Part Number, Serial Number, and Quantity from raw scan strings.
-- **ISO-15434 Compliance:** Inject mandatory ASCII control characters (`{RS}`, `{GS}`, `{EOT}`) into the DataMatrix content.
-- **Label Generation:** Dynamically generate PDF labels containing human-readable barcodes (Code128) and the compliant DataMatrix.
-- **Automated Printing:** Seamlessly send generated PDFs to a label printer using native OS commands.
-- **Scanner Noise Suppression:** Implement strict frontend input handling to prevent browser navigation/shortcuts triggered by barcode scanners acting as keyboards.
+- **System Selection**: Dropdown menu to choose the target system/product.
+- **Auto-Date Detection**: Automatic selection of Year and Month based on the current system date.
+- **Sequential Labeling**: Generate labels in batches based on a starting manual serial number.
+- **Duplicate Prevention**: Real-time validation against a backend database to ensure serial numbers are not reused.
+- **Label Formatting**:
+    - High-density QR Code containing Year-Month-Serial.
+    - Human-readable text at the bottom.
+    - Specific styling: Arial font, size 8pt.
+- **Backend Tracking**: SQL-based persistence to store history of generated labels and prevent duplicates.
 
 ## Key Goals
-- Streamline the label replication process.
-- Ensure 100% compliance with ISO-15434 standards for DataMatrix barcodes.
-- Provide a robust, focus-persistent user interface for high-volume scanning environments.
-- Reuse proven architecture for modular scan-to-print systems.
+- Modernize the Brady label printing workflow with an automated, user-friendly interface.
+- Guarantee 0% duplicate serial number generation.
+- Reuse the robust ReportLab-based PDF generation architecture from the Nokia template.
+- Implement a stable, focus-persistent frontend for high-throughput operational environments.
+
+## Data Format
+`[YEAR][MONTH][SERIAL]` (e.g., `2024010001` for January 2024, serial 0001)
+

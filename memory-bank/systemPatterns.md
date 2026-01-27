@@ -2,45 +2,49 @@
 
 ## Architecture Overview
 The system follows a client-server architecture:
-- **Frontend:** React-based single-page application (SPA) focused on input capture and status reporting.
-- **Backend:** Flask-based Python server handling data processing, PDF generation, and OS-level printing commands.
+- **Frontend:** React-based single-page application (SPA) for selecting systems, entering serial numbers, and previewing labels.
+- **Backend:** Flask-based Python server handling sequential label generation, SQLite database management, and PDF creation.
 
 ## Key Technical Decisions
 
-### 1. Reused Architecture
-The project leverages a **Flask Backend + React Frontend** architecture, capitalizing on printer discovery and execution logic via native OS commands.
+### 1. Sequential Batch Generation
+Instead of single label triggers, the system supports batch generation. The user provides a start index and quantity, and the backend generates a range of labels.
 
-### 2. Service-Oriented Backend
+### 2. Duplicate Prevention Database
+An SQLite database is used to track every serial number printed.
+- **Schema:** `labels (id, system_name, year, month, serial_number, printed_at)`
+- **Constraint:** Unique index on `(system_name, year, month, serial_number)` to prevent any overlap.
+
+### 3. Service-Oriented Backend
 The backend is organized into specialized services:
-- `NokiaLabelService`: Responsible for string parsing, ISO-15434 formatting, and PDF layout using ReportLab.
-- `PrintService`: Handles printer discovery and executes native OS print commands (`powershell` on Windows, `lpr` on Unix).
+- `BradyLabelService`: Handles QR code generation and text layout using ReportLab.
+- `DatabaseService`: Manages SQLite interactions for duplicate checks.
+- `PrintService`: Executes native OS print commands.
 
-### 3. "Dirtying" Process (ISO-15434 Injection)
-The core logic for compliance involves injecting ASCII control characters into the parsed data:
-- `{RS}` (chr 30): Record Separator
-- `{GS}` (chr 29): Group Separator
-- `{EOT}` (chr 4): End of Transmission
-
-### 4. Aggressive Focus & Key Suppression
-To handle barcode scanners that act as keyboards, the frontend implements:
-- **Global Key Filter:** Intercepts and prevents default browser behavior for common scanner-triggered shortcuts (e.g., `Alt+Left`).
-- **Auto-Refocus Loop:** Ensures the hidden/visible input field always has focus, checking every 2 seconds.
-- **Debounced Auto-Submit:** Automatically triggers processing after a short pause (500ms) in scanner input.
+### 4. Label Layout Specification
+- **Format:** PDF canvas sized to label dimensions.
+- **QR Code Content:** `[YEAR][MONTH][SERIAL]`
+- **Human-Readable Text:** Bottom-aligned, **Arial 8pt**.
 
 ## Data Flow
 ```mermaid
-graph LR
-    A[Scanner] -->|Raw Alphanumeric| B(React Frontend)
-    B -->|POST /api/generate-and-print| C(Flask Backend)
-    C --> D{NokiaLabelService}
-    D -->|Parse Regex| E[Parsed Data]
-    E -->|Inject ASCII| F[Formatted ISO String]
-    F -->|ReportLab| G[PDF Label]
-    G --> H{PrintService}
-    H -->|OS Command| I[Label Printer]
+graph TD
+    A[User UI] -->|Select System + Start Serial + Qty| B(React Frontend)
+    B -->|GET /api/check-duplicates| C{Backend Check}
+    C -->|If Duplicate| D[Error Message to User]
+    C -->|If Clean| E[POST /api/generate-labels]
+    E --> F{BradyLabelService}
+    F -->|Loop through Sequence| G[Generate QR + Text]
+    G -->|Store in DB| H[(SQLite Database)]
+    G -->|ReportLab| I[Combined PDF Label]
+    I --> J[Return PDF to Frontend Preview]
+    J --> K[User Clicks Print]
+    K --> L{PrintService}
+    L --> M[Brady Printer]
 ```
 
 ## Component Relationships
 - `app.py`: Main Flask entry point and API route definitions.
-- `services.py`: Contains `NokiaLabelService` and `PrintService` classes.
-- `BarcodeInput.jsx` (Frontend): Critical component for capturing scans reliably.
+- `services.py`: Contains `BradyLabelService`, `DatabaseService`, and `PrintService`.
+- `LabelDashboard.jsx` (Frontend): Main UI for selecting systems and managing serial numbers.
+
