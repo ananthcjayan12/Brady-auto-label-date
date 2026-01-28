@@ -2,5 +2,6 @@ flask
 flask-cors
 reportlab
 qrcode
+pdf2image
 pypiwin32; platform_system == 'Windows'
 

@@ -31,3 +31,5 @@ print-server/*.spec
 
 # Memory files (incorrectly created)
 print-server/:memory:
+
+reference/
