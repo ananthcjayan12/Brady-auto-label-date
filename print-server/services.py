@@ -6,9 +6,6 @@ import platform
 import subprocess
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
-from reportlab.graphics.barcode import code128
-# DataMatrix in reportlab requires 'reportlab' version >= 3.x
-from reportlab.graphics.barcode import createBarcodeDrawing
 
 logger = logging.getLogger(__name__)
 
