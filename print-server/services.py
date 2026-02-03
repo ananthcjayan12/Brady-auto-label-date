@@ -35,7 +35,13 @@ class BradyLabelService:
         filename = f"batch_{uuid.uuid4().hex}.pdf"
         file_path = os.path.join(self.output_folder, filename)
         
-        c = canvas.Canvas(file_path, pagesize=(s['labelWidth']*mm, s['labelHeight']*mm))
+        # Create PDF in PORTRAIT orientation (height x width) for Brady printers
+        # The printer feeds labels vertically, so we create a tall page
+        # then rotate the canvas to draw content in landscape
+        page_width = s['labelHeight'] * mm   # 35mm (physical width when feeding)
+        page_height = s['labelWidth'] * mm   # 100mm (physical height when feeding)
+        
+        c = canvas.Canvas(file_path, pagesize=(page_width, page_height))
         
         padding = len(start_serial)
         start_num = int(start_serial)
@@ -44,7 +50,14 @@ class BradyLabelService:
             current_serial = str(start_num + i).zfill(padding)
             label_content = f"{year}{month}{current_serial}"
             
+            # Rotate canvas 90 degrees to draw in landscape orientation
+            c.saveState()
+            c.translate(page_width, 0)  # Move origin to top-right
+            c.rotate(90)                 # Rotate 90 degrees clockwise
+            
             self._draw_single_label(c, system_name, label_content, s)
+            
+            c.restoreState()
             c.showPage()
         
         c.save()
@@ -144,8 +157,9 @@ class PrintService:
 
                 # Arguments: 
                 # -print-to: Target printer
-                # -print-settings: noscale + landscape for 100x35mm Brady labels
-                cmd = [sumatra_path, "-print-to", printer_name, "-print-settings", "noscale,landscape", file_path]
+                # -print-settings: fit to scale content to the printer's label size
+                # The PDF is created in portrait with rotated content to match Brady printers
+                cmd = [sumatra_path, "-print-to", printer_name, "-print-settings", "fit", file_path]
                 
                 logger.info(f"Executing Windows print: {' '.join(cmd)}")
                 subprocess.run(cmd, check=True)
