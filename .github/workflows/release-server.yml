@@ -43,78 +43,82 @@ jobs:
           $pySumatraPath = $sumatraPath.Replace('\', '\\')
           
           $testCode = @"
-          import sys
-          import os
-          import subprocess
-          from unittest.mock import patch, MagicMock
+import sys
+import os
+import subprocess
+from unittest.mock import patch, MagicMock
 
-          def run_ci_test():
-              print("--- Starting Windows CI Verification ---")
-              
-              # 1. Verify Imports
-              print("Testing imports...")
-              try:
-                  import win32print
-                  import reportlab
-                  import qrcode
-                  print("[PASS] Dependencies loaded successfully")
-              except ImportError as e:
-                  print(f"[FAIL] Failed to load dependencies: {e}")
-                  sys.exit(1)
+def run_ci_test():
+    print("--- Starting Windows CI Verification ---")
+    
+    # 1. Verify Imports
+    print("Testing imports...")
+    try:
+        import win32print
+        import reportlab
+        import qrcode
+        print("[PASS] Dependencies loaded successfully")
+    except ImportError as e:
+        print(f"[FAIL] Failed to load dependencies: {e}")
+        sys.exit(1)
 
-              # 2. Verify SumatraPDF exists and runs
-              print("Testing SumatraPDF binary...")
-              sumatra_path = r"$pySumatraPath"
-              # If the zip content was different, try to find ANY exe
-              if not os.path.exists(sumatra_path):
-                  base_dir = os.path.dirname(sumatra_path)
-                  exes = [f for f in os.listdir(base_dir) if f.lower().endswith('.exe')]
-                  if exes:
-                      sumatra_path = os.path.join(base_dir, exes[0])
-                      print(f"Note: Found Sumatra at alternative path: {sumatra_path}")
+    # 2. Verify SumatraPDF exists and runs
+    print("Testing SumatraPDF binary...")
+    sumatra_path = r"$pySumatraPath"
+    # If the zip content was different, try to find ANY exe
+    if not os.path.exists(sumatra_path):
+        base_dir = os.path.dirname(sumatra_path)
+        if os.path.exists(base_dir):
+            exes = [f for f in os.listdir(base_dir) if f.lower().endswith('.exe')]
+            if exes:
+                sumatra_path = os.path.join(base_dir, exes[0])
+                print(f"Note: Found Sumatra at alternative path: {sumatra_path}")
+        else:
+            print(f"[FAIL] Directory does not exist: {base_dir}")
+            sys.exit(1)
 
-              if os.path.exists(sumatra_path):
-                  res = subprocess.run([sumatra_path, "-help"], capture_output=True)
-                  print("[PASS] SumatraPDF binary is executable")
-              else:
-                  print(f"[FAIL] SumatraPDF not found at {sumatra_path}")
-                  sys.exit(1)
+    if os.path.exists(sumatra_path):
+        res = subprocess.run([sumatra_path, "-help"], capture_output=True)
+        print("[PASS] SumatraPDF binary is executable")
+    else:
+        print(f"[FAIL] SumatraPDF not found at {sumatra_path}")
+        sys.exit(1)
 
-              # 3. Test PDF Generation
-              print("Testing Label Generation...")
-              from services import BradyLabelService, PrintService
-              service = BradyLabelService("ci_temp")
-              if not os.path.exists("ci_temp"): os.makedirs("ci_temp")
-              
-              pdf_path = service.generate_label("CI-TEST", "26", "02", "0001")
-              if os.path.exists(pdf_path):
-                  print(f"[PASS] PDF generated at {pdf_path}")
-              else:
-                  print("[FAIL] PDF generation failed")
-                  sys.exit(1)
+    # 3. Test PDF Generation
+    print("Testing Label Generation...")
+    from services import BradyLabelService, PrintService
+    service = BradyLabelService("ci_temp")
+    if not os.path.exists("ci_temp"): os.makedirs("ci_temp")
+    
+    pdf_path = service.generate_label("CI-TEST", "26", "02", "0001")
+    if os.path.exists(pdf_path):
+        print(f"[PASS] PDF generated at {pdf_path}")
+    else:
+        print("[FAIL] PDF generation failed")
+        sys.exit(1)
 
-              # 4. Mock Printing Logic
-              print("Testing Print Command Construction...")
-              with patch('subprocess.run') as mock_run:
-                  ps = PrintService()
-                  import shutil
-                  # Workaround for dev mode check in services.py
-                  shutil.copy(sumatra_path, "SumatraPDF.exe")
-                  
-                  ps.print_file(pdf_path, printer_name="DummyPrinter")
-                  
-                  args = mock_run.call_args[0][0]
-                  if "-print-to" in args and "DummyPrinter" in args and "-print-settings" in args:
-                      print("[PASS] Print command construction verified")
-                  else:
-                      print(f"[FAIL] Invalid print command: {args}")
-                      sys.exit(1)
-              
-              print("--- CI Verification Passed! ---")
+    # 4. Mock Printing Logic
+    print("Testing Print Command Construction...")
+    with patch('subprocess.run') as mock_run:
+        ps = PrintService()
+        import shutil
+        # Workaround for dev mode check in services.py
+        shutil.copy(sumatra_path, "SumatraPDF.exe")
+        
+        ps.print_file(pdf_path, printer_name="DummyPrinter")
+        
+        args = mock_run.call_args[0][0]
+        if "-print-to" in args and "DummyPrinter" in args and "-print-settings" in args:
+            print("[PASS] Print command construction verified")
+        else:
+            print(f"[FAIL] Invalid print command: {args}")
+            sys.exit(1)
+    
+    print("--- CI Verification Passed! ---")
 
-          if __name__ == '__main__':
-              run_ci_test()
-          "@
+if __name__ == '__main__':
+    run_ci_test()
+"@
           $testCode | Out-File -FilePath ci_verify.py -Encoding utf8
           python ci_verify.py
 
@@ -125,8 +129,6 @@ jobs:
             --collect-submodules reportlab `
             --add-binary "${{ github.workspace }}\sumatra\SumatraPDF.exe;bin/sumatra" `
             app.py
-
-
 
       - name: Create Zip Bundle
         working-directory: ./print-server/dist
