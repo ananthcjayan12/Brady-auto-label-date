@@ -50,9 +50,9 @@ jobs:
                   import win32print
                   import reportlab
                   import qrcode
-                  print("✅ Dependencies loaded successfully")
+                  print("[PASS] Dependencies loaded successfully")
               except ImportError as e:
-                  print(f"❌ Failed to load dependencies: {e}")
+                  print(f"[FAIL] Failed to load dependencies: {e}")
                   sys.exit(1)
 
               # 2. Verify SumatraPDF exists and runs
@@ -60,9 +60,9 @@ jobs:
               sumatra_path = r"C:\sumatra\SumatraPDF.exe"
               if os.path.exists(sumatra_path):
                   res = subprocess.run([sumatra_path, "-help"], capture_output=True)
-                  print("✅ SumatraPDF binary is executable")
+                  print("[PASS] SumatraPDF binary is executable")
               else:
-                  print("❌ SumatraPDF not found at C:\sumatra")
+                  print("[FAIL] SumatraPDF not found at C:\sumatra")
                   sys.exit(1)
 
               # 3. Test PDF Generation
@@ -73,9 +73,9 @@ jobs:
               
               pdf_path = service.generate_label("CI-TEST", "26", "02", "0001")
               if os.path.exists(pdf_path):
-                  print(f"✅ PDF generated at {pdf_path}")
+                  print(f"[PASS] PDF generated at {pdf_path}")
               else:
-                  print("❌ PDF generation failed")
+                  print("[FAIL] PDF generation failed")
                   sys.exit(1)
 
               # 4. Mock Printing Logic
@@ -94,9 +94,9 @@ jobs:
                   # Check if subprocess was called with correct arguments
                   args = mock_run.call_args[0][0]
                   if "-print-to" in args and "DummyPrinter" in args and "-print-settings" in args:
-                      print("✅ Print command construction verified")
+                      print("[PASS] Print command construction verified")
                   else:
-                      print(f"❌ Invalid print command: {args}")
+                      print(f"[FAIL] Invalid print command: {args}")
                       sys.exit(1)
               
               print("--- CI Verification Passed! ---")
