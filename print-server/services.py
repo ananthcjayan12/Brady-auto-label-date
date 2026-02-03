@@ -100,9 +100,11 @@ class BradyLabelService:
 # --- REUSED SERVICE: Handles Printing ---
 class PrintService:
     def get_available_printers(self):
+        """Reused Logic from previous project"""
         printers = []
         default_printer = None
         system = platform.system()
+        
         try:
             if system == 'Windows':
                 import win32print
@@ -110,12 +112,14 @@ class PrintService:
                     printers.append(printer[2])
                 default_printer = win32print.GetDefaultPrinter()
             else:
+                # Mac/Linux Logic
                 result = subprocess.run(['lpstat', '-p'], capture_output=True, text=True)
                 for line in result.stdout.split('\n'):
                     if line.startswith('printer'):
                         printers.append(line.split()[1])
         except Exception as e:
             logger.error(f"Printer list error: {e}")
+            
         return {'printers': printers, 'default': default_printer}
 
     def print_file(self, file_path, printer_name=None):
