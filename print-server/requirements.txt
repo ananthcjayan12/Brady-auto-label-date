@@ -2,5 +2,7 @@ flask
 flask-cors
 reportlab
 qrcode
+PyMuPDF
+Pillow
 pywin32; platform_system == 'Windows'
 
