@@ -144,8 +144,9 @@ class PrintService:
 
                 # Arguments: 
                 # -print-to: Target printer
-                # -print-settings "fit": Automatically scales label to match paper size
-                cmd = [sumatra_path, "-print-to", printer_name, "-print-settings", "fit", file_path]
+                # -print-settings "noscale": Print at exact PDF size, no auto-scaling
+                # This ensures the 50mm x 25mm label prints correctly without rotation
+                cmd = [sumatra_path, "-print-to", printer_name, "-print-settings", "noscale", file_path]
                 
                 logger.info(f"Executing Windows print: {' '.join(cmd)}")
                 subprocess.run(cmd, check=True)
